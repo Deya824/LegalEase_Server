@@ -381,8 +381,21 @@ app.patch('/api/admin/users/:id/role', async (req, res) => {
 
 app.delete('/api/admin/users/:id', async (req, res) => {
     try {
-        const result = await userCollection.deleteOne({ _id: new ObjectId(req.params.id) });
-        res.send(result);
+        const user = await userCollection.findOne({ _id: new ObjectId(req.params.id) });
+
+        if (!user) return res.status(404).send({ message: "User not found." });
+
+        // Delete from userCollection
+        await userCollection.deleteOne({ _id: new ObjectId(req.params.id) });
+
+        // Also delete their lawyer profile if exists
+        await lawyerCollection.deleteOne({ userId: user._id.toString() });
+
+        // Also delete their hire requests and comments
+        await hireCollection.deleteMany({ clientId: user._id.toString() });
+        await commentCollection.deleteMany({ userId: user._id.toString() });
+
+        res.send({ message: "User deleted successfully" });
     } catch (error) {
         res.status(500).send({ message: "Error deleting user", error });
     }
