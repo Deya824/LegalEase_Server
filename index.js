@@ -89,7 +89,14 @@ app.get('/api/transactions/my-hires', verifyToken, async (req, res) => {
 });
 
 // Admin view for all transactions
-
+app.get('/api/admin/transactions',  async (req, res) => {
+    try {
+        const transactions = await hireCollection.find({ paid: true }).toArray();
+        res.send(transactions);
+    } catch (error) {
+        res.status(500).send({ message: "Error fetching transactions", error });
+    }
+});
 
 app.get('/api/transactions/user/:userId', verifyToken, requireRole('user'), async (req, res) => {
     try {
